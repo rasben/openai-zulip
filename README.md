@@ -6,9 +6,9 @@ Built to be used with [Zulip's Outgoing Webhook endpoint API](https://zulip.com/
 
 The bot endpoints are served using [Supabase edge-functions](https://supabase.com/docs/guides/functions).
 
-An edge-fuction is just a server-side typescript application. Each chatbot is a seperate edgefunction, and can be found in seperate folders in [supabase/functions/]
+An edge-fuction is just a server-side typescript application. Each chatbot is a seperate edgefunction, and can be found in seperate folders in [supabase/functions/](supabase/functions/)
 
-The common logic is stored in [supabase/functions/common_chatbot.ts]
+The common logic is stored in [supabase/functions/chatbot.ts](supabase/functions/chatbot.ts)
 
 The chatbots automatically prompts the user for data-consent the first time they are called, to make sure the user is OK with their data being shared with Supabase and OpenAI.
 

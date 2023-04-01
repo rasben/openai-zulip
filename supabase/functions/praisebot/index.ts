@@ -1,8 +1,8 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { serveResponse } from '../common_chatbot.ts'
+import { serveResponse } from '../chatbot.ts'
 
 serve(async (req) => {
-    return serveResponse(req, {
+    return await serveResponse(req, {
         messages: [
             {
                 "role": "system",
@@ -10,8 +10,8 @@ serve(async (req) => {
             },
             {
                 "role": "system",
-                "content": "If the user has given you a name in the format for @**SOME_NAME** you should finish off your message with this exact phrase: '@&#42;&#42;Karma&#42;&#42; @&#42;&#42;SOME_NAME&#42;&#42;"
+                "content": "If the user has given you a name in the format for @**SOME_NAME** you should finish off your message with this exact phrase: '@&#42&#42Karma&#42&#42 @&#42&#42SOME_NAME&#42&#42"
             }
         ],
-    });
+    })
 })
