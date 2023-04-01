@@ -1,0 +1,153 @@
+name: Test bot
+on: pull_request
+
+# Detect if this action is already running, and cancel it.
+# This most likely happened because a second push has been made to a branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Deploying the test bot using the Supabase CLI,
+# and simulating a Zulip JSON POST call to the bot.
+# Checking if the bots response is as expected.
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: supabase/setup-cli@v1
+
+      - name: Deploying the testbot to Supabase
+        run: |
+          $(supabase functions delete testbot --project-ref $SUPABASE_PROJECT_ID) || true
+          supabase functions deploy testbot --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt --legacy-bundle
+
+      - name: Simulating user asking to be deleted.
+        run: |
+          RESPONSE=$(curl -X POST "https://$SUPABASE_PROJECT_ID.functions.supabase.co/testbot" \
+            -H "Content-Type: application/json" \
+            -d '
+              {
+                "bot_email": "outgoing-bot@localhost",
+                "bot_full_name": "Outgoing webhook test",
+                "data": "@**Outgoing webhook test** delete",
+                "message": {
+                  "avatar_url": "https://secure.gravatar.com/avatar/1f4f1575bf002ae562fea8fc4b861b09?d=identicon&version=1",
+                  "content": "@**Outgoing webhook test** delete",
+                  "display_recipient": "Verona",
+                  "id": 112,
+                  "is_me_message": false,
+                  "reactions": [],
+                  "recipient_id": 20,
+                  "sender_email": "iago@zulip.com",
+                  "sender_full_name": "Iago",
+                  "sender_id": 5,
+                  "sender_realm_str": "zulip",
+                  "stream_id": 5,
+                  "subject": "Verona2",
+                  "submessages": [],
+                  "timestamp": 1527876931,
+                  "topic_links": [],
+                  "type": "stream"
+                },
+                "token": "xvOzfurIutdRRVLzpXrIIHXJvNfaJLJ0",
+                "trigger": "mention"
+              }
+            ')
+          echo "$RESPONSE"
+
+          if [[ $RESPONSE == '{"content":"\nDin samtykke er blevet opdateret, og vil blive respekteret i fremtidige beskeder.\r\n\nDu kan altid fjerne samtykke ved at skrive \"delete\" til mig.\r\n\nDu kan se hvad jeg husker om dig ved at skrive \"history\" til mig."}' ]]; then
+            echo "Test passed"
+          else
+            echo "Test failed"
+            exit 1
+          fi
+
+      - name: Simulating that the user has been prompted for consent.
+        run: |
+          RESPONSE=$(curl -X POST "https://$SUPABASE_PROJECT_ID.functions.supabase.co/testbot" \
+            -H "Content-Type: application/json" \
+            -d '
+              {
+                "bot_email": "outgoing-bot@localhost",
+                "bot_full_name": "Outgoing webhook test",
+                "data": "@**Outgoing webhook test** hello",
+                "message": {
+                  "content": "@**Outgoing webhook test** hello",
+                  "sender_email": "iago@zulip.com",
+                  "sender_full_name": "Iago",
+                  "sender_id": 5,
+                  "stream_id": 5
+                }
+              }
+            ')
+          echo "$RESPONSE"
+
+          if [[ $RESPONSE == '{"content":"\n  Hej! Før du kan bruge mig, skal du acceptere at jeg sender dit navn, email og besked ud af EU (til Supabase og OpenAI).\r\n\n  Du *KAN* vælge at jeg også gemmer en historik over dine beskeder, så jeg kan forbedre min respons i fremtiden.\r\n\n  Denne data gemmes i klartekst, og er synlig for min maintainer (Benji).\r\n\nGiv venligst samtykke: \r\n\n- `ok` for at acceptere \r\n\n- `tjoh` for at acceptere basal brug UDEN at slå chat-historik til"}' ]]; then
+            echo "Test passed"
+          else
+            echo "Test failed"
+            exit 1
+          fi
+
+      - name: Simulating a consent approval from the user.
+        run: |
+          RESPONSE=$(curl -X POST "https://$SUPABASE_PROJECT_ID.functions.supabase.co/testbot" \
+            -H "Content-Type: application/json" \
+            -d '
+              {
+                "bot_email": "outgoing-bot@localhost",
+                "bot_full_name": "Outgoing webhook test",
+                "data": "@**Outgoing webhook test** ok",
+                "message": {
+                  "content": "@**Outgoing webhook test** ok",
+                  "sender_email": "iago@zulip.com",
+                  "sender_full_name": "Iago",
+                  "sender_id": 5,
+                  "stream_id": 5
+                }
+              }
+            ')
+          echo "$RESPONSE"
+
+          if [[ $RESPONSE == '{"content":"\nDin samtykke er blevet opdateret, og vil blive respekteret i fremtidige beskeder.\r\n\nDu kan altid fjerne samtykke ved at skrive \"delete\" til mig.\r\n\nDu kan se hvad jeg husker om dig ved at skrive \"history\" til mig."}' ]]; then
+            echo "Test passed"
+          else
+            echo "Test failed"
+            exit 1
+          fi
+
+      - name: Simulating a user prompt, to get a response from OpenAI.
+        run: |
+          RESPONSE=$(curl -X POST "https://$SUPABASE_PROJECT_ID.functions.supabase.co/testbot" \
+            -H "Content-Type: application/json" \
+            -d '
+              {
+                "bot_email": "outgoing-bot@localhost",
+                "bot_full_name": "Outgoing webhook test",
+                "data": "@**Outgoing webhook test** say ok",
+                "message": {
+                  "content": "@**Outgoing webhook test** say ok",
+                  "sender_email": "iago@zulip.com",
+                  "sender_full_name": "Iago",
+                  "sender_id": 5,
+                  "stream_id": 5
+                }
+              }
+            ')
+          echo "$RESPONSE"
+
+          if [[ $RESPONSE == *'"content":"ok'* ]]; then
+            echo "Test passed"
+          else
+            echo "Test failed"
+            exit 1
+          fi

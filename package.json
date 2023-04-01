@@ -1,0 +1,30 @@
+{
+  "name": "zulip-openai",
+  "version": "1.0.0",
+  "description": "Zulip/OpenAI chatbots, powered by Supabase.",
+  "main": "index.js",
+  "scripts": {
+    "js:eslint": "eslint './**/*.ts'",
+    "js:prettier": "prettier './**/*.ts'",
+    "lint": "concurrently 'npm:js:eslint' 'npm:js:prettier -- --check' --raw",
+    "format": "concurrently 'npm:js:eslint -- --fix' 'npm:js:prettier -- --write' --max-processes 1 --raw",
+    "test": "concurrently 'npm:js:lint' 'npm:js:format'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rasben/openai-zulip.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rasben/openai-zulip/issues"
+  },
+  "homepage": "https://github.com/rasben/openai-zulip#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "concurrently": "^8.0.1",
+    "eslint": "^8.37.0",
+    "prettier": "^2.8.7"
+  }
+}
