@@ -1,0 +1,33 @@
+name: Deploy Supabase edge-functions
+
+on:
+  push:
+    branches:
+      - main
+
+# Detect if this action is already running, and cancel it.
+# This most likely happened because a second push has been made to a branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: supabase/setup-cli@v1
+
+      - name: Deploying using Supabase CLI
+        run: |
+          for function in $(find ./supabase/functions/* -maxdepth 1 -type d -exec basename {} \;); do
+            supabase functions deploy $function --project-ref $PROJECT_ID --no-verify-jwt --legacy-bundle
+          done
