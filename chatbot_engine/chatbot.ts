@@ -9,25 +9,7 @@ import {
 } from "./consent.ts";
 
 import { callAPI as openAICallAPI } from "./openai.ts";
-
-// Helper, for returning a Response in a format that Zulip understands.
-async function returnResponse(message: any, status = 200): Promise<Response> {
-  return new Response(
-    JSON.stringify({
-      content: message,
-    }),
-    {
-      headers: { "Content-Type": "application/json" },
-      status: status,
-    }
-  );
-}
-
-// Helper function for returning an error response.
-async function returnError(message: string): Promise<Response> {
-  console.error(message);
-  return returnResponse(`Error: ${message}`, 400);
-}
+import { returnResponse, returnError } from "./response.ts";
 
 // Clean up the prompt string, such as removing the bot call name.
 function getCleanPrompt(prompt: string, bot_name: string) {
