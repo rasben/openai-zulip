@@ -2,10 +2,9 @@
   "name": "zulip-openai",
   "version": "1.0.0",
   "description": "Zulip/OpenAI chatbots, powered by Supabase.",
-  "main": "index.js",
   "scripts": {
     "js:eslint": "eslint './**/*.ts'",
-    "js:prettier": "prettier './**/*.ts'",
+    "js:prettier": "prettier './'",
     "lint": "concurrently 'npm:js:eslint' 'npm:js:prettier -- --check' --raw",
     "format": "concurrently 'npm:js:eslint -- --fix' 'npm:js:prettier -- --write' --max-processes 1 --raw",
     "test": "concurrently 'npm:js:lint' 'npm:js:format'"

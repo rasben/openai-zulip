@@ -11,7 +11,7 @@ serve(async (req) => {
 
   prompt = getCleanPrompt(prompt, bot_full_name);
 
-  const messages = [];
+  const messages = [] as any[];
 
   // Treat each line of the prompt as a seperate message.
   // - If the line is empty, skip it.
@@ -19,7 +19,7 @@ serve(async (req) => {
   // - If the line starts with 'assistant:', treat it as an assistant message.
   // - Else, we treat it as a user message.
   const lines = prompt.split("\n");
-  lines.forEach((line) => {
+  lines.forEach((line: string) => {
     let role = "user";
 
     if (line.startsWith("system:")) {
