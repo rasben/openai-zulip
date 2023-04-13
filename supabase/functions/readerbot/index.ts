@@ -1,12 +1,18 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+// @ts-ignore
+import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
+
+// @ts-ignore
+import { Readability } from "https://cdn.skypack.dev/@mozilla/readability?dts";
+// @ts-ignore
+import { NodeHtmlMarkdown } from "https://cdn.skypack.dev/node-html-markdown?dts";
+// @ts-ignore
+import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
+
+import { getPayload, getCleanPrompt } from "../../../chatbot_engine/chatbot.ts";
 import {
   returnResponse,
   returnError,
 } from "../../../chatbot_engine/response.ts";
-import { getCleanPrompt } from "../../../chatbot_engine/chatbot.ts";
-import { Readability } from "https://cdn.skypack.dev/@mozilla/readability?dts";
-import { NodeHtmlMarkdown } from "https://cdn.skypack.dev/node-html-markdown?dts";
-import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 import { callAPI as openAICallAPI } from "../../../chatbot_engine/openai.ts";
 
 function isValidHttpUrl(string: string): boolean {
@@ -20,12 +26,10 @@ function isValidHttpUrl(string: string): boolean {
   return url.protocol === "http:" || url.protocol === "https:";
 }
 
-serve(async (req) => {
-  const { bot_full_name, data } = await req.json();
+serve(async (req: Request) => {
+  const payload = await getPayload(req);
 
-  let prompt = data.toString();
-
-  prompt = getCleanPrompt(prompt, bot_full_name);
+  const prompt = getCleanPrompt(payload);
 
   const tldr_trigger = "tldr ";
   const tldr = prompt.startsWith(tldr_trigger);

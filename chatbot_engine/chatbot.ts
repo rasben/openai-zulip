@@ -1,3 +1,6 @@
+// @ts-ignore
+import { Response } from "https://deno.land/std@0.183.0/http/server.ts";
+
 import { supabase, commands } from "./shared.ts";
 
 import {
@@ -11,11 +14,44 @@ import {
 import { callAPI as openAICallAPI } from "./openai.ts";
 import { returnResponse, returnError } from "./response.ts";
 
+export interface ChatbotMessage {
+  role: string;
+  content: string;
+}
+
+export interface ChatbotPayload {
+  bot_full_name: string;
+  data: string;
+  message?: {
+    sender_full_name?: string;
+    sender_id?: number;
+    stream_id?: number;
+  };
+}
+
+export interface ChatbotVariables {
+  user_name?: string;
+  user_id: number;
+  bot_id: string;
+  prompt?: string;
+  messages: ChatbotMessage[];
+  summary_id?: string;
+  user_message?: ChatbotMessage;
+  bot_reply?: string;
+}
+
+interface ChatbotOptions {
+  messages?: ChatbotMessage[];
+  personality?: string;
+}
+
 // Clean up the prompt string, such as removing the bot call name.
-export function getCleanPrompt(prompt: string, bot_name: string) {
+export function getCleanPrompt(payload: ChatbotPayload) {
+  let prompt = payload?.data.toString();
+
   // If the bot has been initialized by calling it's name,
   // we'll remove it from the prompt.
-  const bot_user_name = `@**${bot_name}**`;
+  const bot_user_name = `@**${payload?.bot_full_name}**`;
 
   if (prompt.startsWith(bot_user_name)) {
     prompt = prompt.replace(bot_user_name, "");
@@ -45,7 +81,7 @@ async function getChatSummary(summary_id: string): Promise<string> {
 }
 
 // Save a chat summary to Supabase DB.
-async function setChatSummary(vars: any): Promise<void> {
+async function setChatSummary(vars: ChatbotVariables): Promise<void> {
   if (vars.bot_reply) {
     vars.messages.push({
       role: "assistant",
@@ -76,18 +112,25 @@ async function setChatSummary(vars: any): Promise<void> {
   }
 }
 
-// Build the variables for processing the chatbot.
-async function buildVariables(req: any, options: any): Promise<any> {
+export async function getPayload(req: Request): Promise<ChatbotPayload> {
   const { bot_full_name, data, message } = await req.json();
 
-  const user_name = message?.sender_full_name;
+  return { bot_full_name, data, message };
+}
+
+// Build the variables for processing the chatbot.
+function buildVariables(
+  payload: ChatbotPayload,
+  options: ChatbotOptions
+): ChatbotVariables {
+  const user_name = payload?.message?.sender_full_name;
 
   // Removing any whitespaces, symbols etc. from the bot name.
-  const bot_id = bot_full_name.replace(/\W/g, "");
+  const bot_id = payload?.bot_full_name.replace(/\W/g, "");
 
   const messages = options?.messages ?? [];
 
-  if (Object.hasOwn(options, "personality")) {
+  if ("personality" in options) {
     messages.push({
       role: "system",
       content: "You are taking the personality of " + options["personality"],
@@ -100,43 +143,41 @@ async function buildVariables(req: any, options: any): Promise<any> {
   });
 
   // If the user has not given GDPR consent, break out with a prompt for consent.
-  const user_id = message?.sender_id;
+  const user_id = payload?.message?.sender_id;
 
-  let prompt = data.toString();
-
-  prompt = getCleanPrompt(prompt, bot_full_name);
+  const prompt = getCleanPrompt(payload);
 
   // We want to save summaries pr user, pr stream:
   // AKA: If the user says they like hamburgers in #lounge, the bot wont
   // remember it in #random.
-  const stream_id = message?.stream_id;
+  const stream_id = payload?.message?.stream_id;
   const summary_id = `${bot_id}-${stream_id}-${user_id}`;
 
   return {
     user_name: user_name,
-    user_id: user_id,
+    user_id: user_id ?? 0,
     bot_id: bot_id,
     prompt: prompt,
     messages: messages,
     summary_id: summary_id,
-    // These options will be set further down the code.
-    user_message: {},
-    bot_reply: "",
   };
 }
 
 // Endpoint used by the bots - serving the response that Zulip understands.
-export async function serveResponse(req: any, options: any): Promise<Response> {
-  const vars = await buildVariables(req, options);
+export async function serveResponse(
+  payload: ChatbotPayload,
+  options: ChatbotOptions
+): Promise<Response> {
+  const vars = buildVariables(payload, options);
 
   // Checking if the users prompt is one of the consent-change keywords.
-  if (await detectAndHandleConsentChange(vars.user_id, vars.prompt)) {
+  if (await detectAndHandleConsentChange(vars.user_id, vars.prompt ?? "")) {
     return await returnResponse(updateConsentInfo());
   }
 
   // If the user wants to see the chat history, we'll return that.
   if (vars.prompt === commands.show_history) {
-    return await returnResponse(await getChatSummary(vars.summary_id));
+    return await returnResponse(await getChatSummary(vars?.summary_id ?? ""));
   }
 
   // If the user has not given consent, we'll return a prompt for consent.
@@ -144,11 +185,11 @@ export async function serveResponse(req: any, options: any): Promise<Response> {
     return returnResponse(consentInfo());
   }
 
-  const hasFullConsent = await fullConsentCheck(vars.user_id);
+  const hasFullConsent = await fullConsentCheck(vars?.user_id ?? 0);
 
   // If the user has given full consent, we'll load any previous chat history.
   if (hasFullConsent) {
-    const summary = await getChatSummary(vars.summary_id);
+    const summary = await getChatSummary(vars?.summary_id ?? "");
 
     if (summary) {
       vars.messages.push({

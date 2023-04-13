@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "Zulip/OpenAI chatbots, powered by Supabase.",
   "scripts": {
-    "js:eslint": "eslint './**/*.ts'",
+    "typecheck": "tsc --noEmit",
+    "js:eslint": "eslint ./ --ext .ts",
     "js:prettier": "prettier './'",
-    "lint": "concurrently 'npm:js:eslint' 'npm:js:prettier -- --check' --raw",
+    "lint": "concurrently 'npm:typecheck' 'npm:js:eslint' 'npm:js:prettier -- --check' --raw",
     "format": "concurrently 'npm:js:eslint -- --fix' 'npm:js:prettier -- --write' --max-processes 1 --raw",
     "test": "concurrently 'npm:js:lint' 'npm:js:format'"
   },
@@ -25,5 +26,8 @@
     "concurrently": "^8.0.1",
     "eslint": "^8.37.0",
     "prettier": "^2.8.7"
+  },
+  "dependencies": {
+    "@tsconfig/deno": "^1.0.7"
   }
 }
