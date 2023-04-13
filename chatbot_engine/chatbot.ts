@@ -12,7 +12,7 @@ import { callAPI as openAICallAPI } from "./openai.ts";
 import { returnResponse, returnError } from "./response.ts";
 
 // Clean up the prompt string, such as removing the bot call name.
-function getCleanPrompt(prompt: string, bot_name: string) {
+export function getCleanPrompt(prompt: string, bot_name: string) {
   // If the bot has been initialized by calling it's name,
   // we'll remove it from the prompt.
   const bot_user_name = `@**${bot_name}**`;
