@@ -3,6 +3,7 @@ import {
   returnResponse,
   returnError,
 } from "../../../chatbot_engine/response.ts";
+import { getCleanPrompt } from "../../../chatbot_engine/chatbot.ts";
 import { Readability } from "https://cdn.skypack.dev/@mozilla/readability?dts";
 import { NodeHtmlMarkdown } from "https://cdn.skypack.dev/node-html-markdown?dts";
 import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
@@ -21,16 +22,10 @@ function isValidHttpUrl(string: string): boolean {
 
 serve(async (req) => {
   const { bot_full_name, data } = await req.json();
+
   let prompt = data.toString();
-  // If the bot has been initialized by calling it's name,
-  // we'll remove it from the prompt.
-  const bot_user_name = `@**${bot_full_name}**`;
 
-  if (prompt.startsWith(bot_user_name)) {
-    prompt = prompt.replace(bot_user_name, "");
-  }
-
-  prompt = prompt.trim();
+  prompt = getCleanPrompt(prompt, bot_full_name);
 
   const tldr_trigger = "tldr ";
   const tldr = prompt.startsWith(tldr_trigger);
