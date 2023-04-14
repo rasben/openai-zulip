@@ -23,8 +23,7 @@ export async function callAPI(
     messages: messages,
   });
 
-  console.log(response);
-  console.log(response.choices);
+  console.log(response?.choices);
 
   return response?.choices[0]?.message?.content;
 }
