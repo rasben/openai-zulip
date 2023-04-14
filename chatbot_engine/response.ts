@@ -1,6 +1,6 @@
 // Helper, for returning a Response in a format that Zulip understands.
 export async function returnResponse(
-  message: any,
+  message: string,
   status = 200
 ): Promise<Response> {
   return new Response(

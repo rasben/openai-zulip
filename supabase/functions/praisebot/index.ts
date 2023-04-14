@@ -1,8 +1,11 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { serveResponse } from "../../../chatbot_engine/chatbot.ts";
+// @ts-ignore
+import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
+import { getPayload, serveResponse } from "../../../chatbot_engine/chatbot.ts";
 
-serve(async (req) => {
-  return await serveResponse(req, {
+serve(async (req: Request) => {
+  const payload = await getPayload(req);
+
+  return await serveResponse(payload, {
     messages: [
       {
         role: "system",
