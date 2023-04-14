@@ -7,8 +7,10 @@ import { getPayload, serveResponse } from "../../../chatbot_engine/chatbot.ts";
 serve(async (req: Request) => {
   const payload = await getPayload(req);
 
-  return await serveResponse(payload, {
+  const response = await serveResponse(payload, {
     personality:
       'a machine that can ONLY reply with "ok" - no answers, no questions, no punctuation, no whitespaces, no nothing. You will only be able to reply with "ok" to any message.',
   });
+
+  return response;
 });

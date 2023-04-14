@@ -5,7 +5,7 @@ import { getPayload, serveResponse } from "../../../chatbot_engine/chatbot.ts";
 serve(async (req: Request) => {
   const payload = await getPayload(req);
 
-  return await serveResponse(payload, {
+  const response = await serveResponse(payload, {
     messages: [
       {
         role: "system",
@@ -19,4 +19,6 @@ serve(async (req: Request) => {
       },
     ],
   });
+
+  return response;
 });
