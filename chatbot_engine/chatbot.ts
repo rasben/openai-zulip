@@ -85,7 +85,7 @@ async function setChatSummary(vars: ChatbotVariables): Promise<void> {
   if (vars.bot_reply) {
     vars.messages.push({
       role: "assistant",
-      content: vars.bot_reply,
+      content: vars.bot_reply ?? "",
     });
   }
 
@@ -128,7 +128,7 @@ function buildVariables(
   // Removing any whitespaces, symbols etc. from the bot name.
   const bot_id = payload?.bot_full_name.replace(/\W/g, "");
 
-  const messages = options?.messages ?? [];
+  const messages = [];
 
   if ("personality" in options) {
     messages.push({

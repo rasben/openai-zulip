@@ -1,5 +1,6 @@
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
+// @ts-ignore
 import { getPayload, serveResponse } from "../../../chatbot_engine/chatbot.ts";
 
 // A simple bot that only replies with "ok"
