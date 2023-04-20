@@ -1,16 +1,13 @@
 // @ts-ignore
 import { OpenAI } from "https://deno.land/x/openai/mod.ts";
-import { ChatbotMessage } from "./chatbot.ts";
 
 const open_ai_model = "gpt-3.5-turbo";
 
 // Send messages to OpenAI, and get a text response.
-export async function callAPI(
-  messages: ChatbotMessage[]
-): Promise<string | boolean> {
+// eslint-disable-next-line  @typescript-eslint/no-explicit-any
+export async function callAPI(messages: any): Promise<string | boolean> {
   // @ts-ignore
   const openAIAPIKey = Deno.env.get("OPENAI_API_KEY");
-  console.log(messages);
 
   if (!openAIAPIKey) {
     return false;
